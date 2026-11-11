@@ -1,0 +1,2 @@
+Este proyecto tiene como objetivo el crear un sistema capaz de buscar diversos
+sitios que cumplan una serie de características y adjuntar los correos y los nombres del sitio en una tabla, en formato .csv
