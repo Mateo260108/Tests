@@ -2,7 +2,7 @@ import csv
 import os
 from overpass_extractor import countries
 
-def filter_lines(my_file, iso_code):
+def filter_lines(my_file):
     web_included = []
     email_included = []
     nothing_included = []
@@ -54,7 +54,7 @@ def save_to_csv(file_name, data_list, iso_code):
     columns = data_list[0].keys()
     with open(full_path, "w", encoding="utf-8", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=columns, delimiter="\t")
-        writer.writeheader
+        writer.writeheader()
         writer.writerows(data_list)
 
 
