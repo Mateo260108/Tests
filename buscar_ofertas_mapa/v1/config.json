@@ -1,0 +1,23 @@
+{
+    "countries": {"Iceland": "IS", "Norway": "NO", "Finland": "FI", "Switzerland": "CH"},
+    "false_ends": [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".js", ".css", "wixpress.com", "sentry.io", "example.com"],
+    "keywords_email": ["contact", "kontakt", "about", "yhteystiedot", "kontaktid", "jobs", "career", "work", "email", "mail"],
+
+    "HEADERS": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    },
+
+    "discard_terms": [
+        "noreply", "no-reply", "donotreply", "privacy", "gdpr", "dpo",
+        "webmaster", "admin@", "support", "billing", "invoice", "accounting",
+        "newsletter", "press", "media", "security", "abuse", "postmaster"
+    ],
+    
+    "max_priority": [
+        "jobs", "career", "careers", "work", "hr", "rekry", "jobb", "tyopaikat",
+        "info", "contact", "kontakt", "post", "office", "hello", "hei",
+        "reception", "frontdesk", "stay", "mail"
+    ]
+
+
+}
