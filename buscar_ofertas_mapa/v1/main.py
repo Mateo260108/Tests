@@ -6,6 +6,7 @@ import re
 import time
 from dotenv import load_dotenv
 import requests
+import math
 
 load_dotenv()
 contact_email = os.getenv("USER_EMAIL", "generic_user@example.com")
@@ -17,6 +18,8 @@ false_ends = tuple(x.lower() for x in config.get("false_ends", []))
 headers_web = config.get("HEADERS", {"User-Agent": "Mozilla/5.0"})
 email_max_priority = [x.lower() for x in config.get("max_priority", [])]
 email_discard_terms = tuple(x.lower() for x in config.get("discard_terms", []))
+
+lambda_km = 4.0
 
 EMAIL_REGEX = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
 
@@ -172,25 +175,79 @@ def scrape_and_merge(iso_code):
 
         finals.append(place)
 
-    return finals
+    return finals, all_places
 
+def haversine(lat1, lon1, lat2, lon2):
+    earth_radius = 6371.0
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 -lat1)
+    dlambda = math.radians(lon1, lon2)
+    a = (
+        math.sin(dphi / 2) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    )
+    return 2 * earth_radius * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-def save_to_csv(iso_code, output_path="email_list.csv"):
-    list_to_save = scrape_and_merge(iso_code)
-    if not list_to_save:
+def parse_coords(place):
+    try:
+        return float(place.get("lat")), float(place.get("lon"))
+    except (ValueError, TypeError):
+        return None, None
+
+def apply_proximity_order(places, reference_places, mode="rural", decay_km=lambda_km):
+    ref_coords = []
+    for reference in reference_places:
+        rlat, rlon = parse_coords(reference)
+        if rlat is not None and rlon is not None:
+            ref_coords.append(rlat, rlon)
+
+    ordered = []
+    no_coords = []
+
+    for place in places:
+        item = dict(place)
+        lat, lon = parse_coords(item)
+        if lat is None or lon is None:
+            item["score_s"] = "" 
+            no_coords.append(item)
+            continue
+
+        score_s = 0.0
+        for rlat, rlon in ref_coords:
+            distance = haversine(lat, lon, rlat, rlon)
+            if distance > 0.001:
+                score_s += math.exp(-distance / decay_km)
+
+    item["score_s"] = round(score_s, 4)
+    ordered.append(item)
+
+    reverse_mode = mode == "urban"
+    ordered.sort(key=lambda x: x["score_s"], reverse=reverse_mode)
+    return ordered + no_coords
+
+def save_to_csv(rows, output_path="email_list.csv"):
+    if not rows:
         print("No data to save.")
         return
 
-    fieldnames = list(list_to_save[0].keys())
+    fieldnames = list(rows[0].keys())
     with open(output_path, "w", encoding="utf-8", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames, delimiter="\t")
         writer.writeheader()
-        writer.writerows(list_to_save)
+        writer.writerows(rows)
 
-    print(f"Saved {len(list_to_save)} rows to {output_path}")
+    print(f"Saved {len(rows)} rows to {output_path}")
 
 if __name__ == "__main__":
-    save_to_csv("IS")
+    iso = "IS"
+    final_places, all_places = scrape_and_merge(iso)
+    use_function = input("Apply rural/urban filtering to the data? (y/n)").strip().lower()
+    if use_function == "y":
+        mode_input = input("(Modes: 'u' for urban, 'r' for rural) [answer]: ").strip().lower()
+        mode = "urban" if mode_input == "u" else "rural"
+        final_places = apply_proximity_order(final_places, all_places, mode, decay_km=lambda_km)
+        save_to_csv(final_places, output_path=f"email_list_{iso}.csv")
+
 
 
         
