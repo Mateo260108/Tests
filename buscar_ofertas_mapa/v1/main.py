@@ -58,7 +58,8 @@ if __name__ == "__main__":
 
     # 4. Ordenar por vecinos y relevancia
     use_function = input("Apply rural/urban filtering to the data? (y/n)").strip().lower()
-    if use_function == "y":
+    use_proximity = use_function == "y"
+    if use_proximity:
         mode_input = input("(Modes: 'u' for urban, 'r' for rural) [answer]: ").strip().lower()
         mode = "urban" if mode_input == "u" else "rural"
 
@@ -66,7 +67,7 @@ if __name__ == "__main__":
         final_places = order_by_relevance_and_proximity(
             final_places,
             all_places,
-            use_proximity=False,
+            use_proximity=use_proximity,
             mode="rural",
             decay_km=lambda_km,
         )
