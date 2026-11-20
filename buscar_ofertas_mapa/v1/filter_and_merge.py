@@ -24,6 +24,12 @@ headers_web = config.get("HEADERS", {"User-Agent": "Mozilla/5.0"})
 
 EMAIL_REGEX = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
 
+def has_relevant_match(html_text, keywords):
+    if not html_text:
+        return False
+    text_lower = html_text.lower()
+    return any(keyword in text_lower for keyword in keywords)
+
 def filter_results(all_places):
     web_included = []
     email_included = []
@@ -54,7 +60,8 @@ def choose_email(candidates):
     return candidates[0]
 
 
-def scrape_and_merge(iso_code):
+def scrape_and_merge(iso_code, relevant_keywords=None):
+    keyword_list = [k.strip().lower() for k in (relevant_keywords or []) if k and k.strip()]
     discard_terms, _ = email_lists()
     all_places = pull_list_from_api(iso_code)
     if not all_places:
@@ -94,8 +101,9 @@ def scrape_and_merge(iso_code):
 
         place_copy = dict(place)
         place_copy["email"] = choose_email(valid)
+        place_copy["relevance"] = "relevant" if has_relevant_match(resp.text, keyword_list) else "regular"
         scraped_list.append(place_copy)
-        print(f"OK -> {place_copy['email']}")
+        print(f"OK -> {place_copy['email']} [{place_copy['relevance']}]")
         time.sleep(random.uniform(0.5, 1.5))
 
     seen_emails = set()
@@ -116,6 +124,8 @@ def scrape_and_merge(iso_code):
         if best_email:
             seen_emails.add(best_email)
 
-        finals.append(place)
+        item = dict(place)
+        item.setdefault("relevance", "regular")
+        finals.append(item)
 
     return finals, all_places
