@@ -1,279 +1,12 @@
 import csv
-import json
-import os
-import random
-import re
 import time
 from dotenv import load_dotenv
-from deep_translator import GoogleTranslator
-import requests
-import math
-
 load_dotenv()
-contact_email = os.getenv("USER_EMAIL", "generic_user@example.com")
 
-with open("config.json", "r", encoding="utf-8") as file:
-    config = json.load(file)
-
-country_info = config["countries"]["Iceland"]
-iso_code = country_info["iso"]
-local_lang = country_info["lang"]
-
-false_ends = tuple(x.lower() for x in config.get("false_ends", []))
-headers_web = config.get("HEADERS", {"User-Agent": "Mozilla/5.0"})
-
-lambda_km = 4.0
-translation_cache = {}
-EMAIL_REGEX = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
-
-def translate_from_en(term, target_lang):
-    clean_term = term.strip().lower()
-    if not clean_term or target_lang=="en":
-        return clean_term
-
-    cache_key = (clean_term, target_lang)
-    if cache_key in translation_cache:
-        return translation_cache[cache_key]
-
-    try:
-        translated = GoogleTranslator(source="en", target=target_lang).translate(clean_term)
-        result = (translated or clean_term).strip().lower()
-    except Exception:
-        result = clean_term
-
-    translation_cache[cache_key] = result
-    return result
-
-def build_lang_terms(terms_en, local_lang):
-    print("Translating terms...")
-    combined = []
-    seen = set()
-
-    for term in terms_en:
-        base = term.strip().lower()
-        if base and base not in seen:
-            seen.add(base)
-            combined.append(base)
-
-        if local_lang and local_lang != "en":
-            translated = translate_from_en(base, local_lang)
-            if translated and translated not in seen:
-                seen.add(translated)
-                combined.append(translated)
-
-    print("Finished translating terms.")
-    return combined
-
-email_discard_terms = tuple(build_lang_terms(config["discard_terms_EN"], local_lang))
-email_max_priority = build_lang_terms(config["max_priority_EN"], local_lang)
-
-
-def pull_list_from_api(iso_code):
-    print("Pulling list from Overpass API...")
-    url = "https://overpass-api.de/api/interpreter"
-    query = f"""
-    [out:json][timeout:60];
-    area["ISO3166-1"="{iso_code.upper()}"][admin_level=2]->.searchArea;
-    (
-      nwr(area.searchArea)["tourism"="hostel"];
-      nwr(area.searchArea)["tourism"="hotel"];
-      nwr(area.searchArea)["tourism"="guest_house"];
-    );
-    out center;
-    """
-    headers = {
-        "User-Agent": f"BuscadorHoteles/1.1 ({contact_email})"
-    }
-
-    for tries in range(5):
-        try:
-            response = requests.post(url, data={"data": query}, headers=headers, timeout=65)
-            if response.status_code == 200:
-                print("Request completed successfully. Pulling data...")
-                elements = response.json().get("elements", [])
-                results = []
-
-                for el in elements:
-                    tags = el.get("tags", {})
-                    center = el.get("center", {})
-                    lat = el.get("lat") if el.get("lat") is not None else center.get("lat", "")
-                    lon = el.get("lon") if el.get("lon") is not None else center.get("lon", "")
-
-                    results.append({
-                        "id": f"{el.get('type', '')}/{el.get('id', '')}",
-                        "name": tags.get("name", ""),
-                        "lat": lat,
-                        "lon": lon,
-                        "category": tags.get("tourism", ""),
-                        "web": tags.get("contact:website") or tags.get("website") or "",
-                        "email": tags.get("contact:email") or tags.get("email") or "",
-                        "phone": tags.get("contact:phone") or tags.get("phone") or "",
-                    })
-                return results
-
-            if response.status_code in (429, 502, 503, 504):
-                wait_time = 30 + (tries * 10)
-                print(f"Status {response.status_code}. Retrying in {wait_time}s...")
-                time.sleep(wait_time)
-            else:
-                print(f"Request failed with status code {response.status_code}. No retry.")
-                break
-
-        except (requests.exceptions.RequestException, ValueError) as e:
-            wait_time = 30 + (tries * 10)
-            print(f"Request error ({e}). Retrying in {wait_time}s...")
-            time.sleep(wait_time)
-
-    print("Server was too busy or failed after retries.")
-    return []
-
-
-def filter_results(all_places):
-    print("Filtering results...")
-    web_included = []
-    email_included = []
-    phone_included = []
-
-    for place in all_places:
-        web = (place.get("web") or "").strip()
-        email = (place.get("email") or "").strip()
-        phone = (place.get("phone") or "").strip()
-
-        if web:
-            web_included.append(place)
-        if email:
-            email_included.append(place)
-        if phone:
-            phone_included.append(place)
-
-    return web_included, email_included, phone_included
-
-
-def choose_email(candidates):
-    print("Selecting best email...")
-    for prefix in email_max_priority:
-        for email in candidates:
-            local_part = email.split("@", 1)[0]
-            if local_part == prefix or local_part.startswith(prefix):
-                return email
-    return candidates[0]
-
-
-def scrape_and_merge(iso_code):
-    print("Scraping data in urls...")
-    all_places = pull_list_from_api(iso_code)
-    if not all_places:
-        return [], []
-
-    webs, clean_emails, _ = filter_results(all_places)
-    scraped_list = []
-
-    for i, place in enumerate(webs, 1):
-        url = (place.get("web") or "").strip()
-        if url and not url.startswith(("http://", "https://")):
-            url = "https://" + url
-
-        name = (place.get("name") or "").strip()
-        print(f"[{i}/{len(webs)}] {name} -> {url} ...", end=" ")
-
-        try:
-            resp = requests.get(url, headers=headers_web, timeout=15)
-        except requests.exceptions.RequestException as e:
-            print(f"Error ({e})")
-            continue
-
-        if resp.status_code != 200:
-            print(f"HTTP {resp.status_code}")
-            continue
-
-        raw_matches = {m.lower() for m in EMAIL_REGEX.findall(resp.text)}
-        filtered_ends = [
-            e for e in raw_matches
-            if not e.endswith(false_ends) and not any(f in e for f in false_ends)
-        ]
-        valid = [e for e in filtered_ends if not e.startswith(email_discard_terms)]
-
-        if not valid:
-            print("No valid emails found")
-            continue
-
-        place_copy = dict(place)
-        place_copy["email"] = choose_email(valid)
-        scraped_list.append(place_copy)
-        print(f"OK -> {place_copy['email']}")
-        time.sleep(random.uniform(0.5, 1.5))
-
-    seen_emails = set()
-    seen_ids = set()
-    finals = []
-
-    print("Merging emails...")
-    for place in (clean_emails + scraped_list):
-        place_id = (place.get("id") or "").strip()
-        best_email = (place.get("email") or "").strip().lower()
-
-        if place_id and place_id in seen_ids:
-            continue
-        if best_email and best_email in seen_emails:
-            continue
-
-        if place_id:
-            seen_ids.add(place_id)
-        if best_email:
-            seen_emails.add(best_email)
-
-        finals.append(place)
-
-    return finals, all_places
-
-def haversine(lat1, lon1, lat2, lon2):
-    earth_radius = 6371.0
-    phi1, phi2 = math.radians(lat1), math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon1 - lon2)
-    a = (
-        math.sin(dphi / 2) ** 2
-        + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-    )
-    return 2 * earth_radius * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-def parse_coords(place):
-    try:
-        return float(place.get("lat")), float(place.get("lon"))
-    except (ValueError, TypeError):
-        return None, None
-
-def apply_proximity_order(places, reference_places, mode="rural", decay_km=lambda_km):
-    print("Measuring distance between neighbours...")
-    ref_coords = []
-    for reference in reference_places:
-        rlat, rlon = parse_coords(reference)
-        if rlat is not None and rlon is not None:
-            ref_coords.append((rlat, rlon))
-
-    ordered = []
-    no_coords = []
-
-    for place in places:
-        item = dict(place)
-        lat, lon = parse_coords(item)
-        if lat is None or lon is None:
-            item["score_s"] = "" 
-            no_coords.append(item)
-            continue
-
-        score_s = 0.0
-        for rlat, rlon in ref_coords:
-            distance = haversine(lat, lon, rlat, rlon)
-            if distance > 0.001:
-                score_s += math.exp(-distance / decay_km)
-
-        item["score_s"] = round(score_s, 4)
-        ordered.append(item)
-
-    reverse_mode = mode == "urban"
-    ordered.sort(key=lambda x: x["score_s"], reverse=reverse_mode)
-    return ordered + no_coords
+from translating import build_lang_terms
+from overpass_pull import pull_list_from_api
+from filter_and_merge import email_lists, scrape_and_merge
+from neighbours import apply_proximity_order, lambda_km
 
 def save_to_csv(rows, output_path="email_list.csv"):
     print("Saving to CSV format file...")
@@ -290,20 +23,45 @@ def save_to_csv(rows, output_path="email_list.csv"):
     print(f"Saved {len(rows)} rows to {output_path}")
 
 if __name__ == "__main__":
-    start_time = time.perf_counter()
-
+    total_start = time.perf_counter()
+    timings = {}
     iso = "IS"
-    final_places, all_places = scrape_and_merge(iso)
-    use_function = input("Apply rural/urban filtering to the data? (y/n)").strip().lower()
 
+    # 1. Traducción 
+    t0 = time.perf_counter()
+    email_lists()
+    timings["translation_init"] = time.perf_counter() - t0
+
+    # 2. Extracción Overpass + scraping + merge
+    t0 = time.perf_counter()
+    final_places, all_places = scrape_and_merge(iso)
+    timings["scrape_and_merge"] = time.perf_counter() - t0
+
+    # 3. Ordenar por vecinos
+    use_function = input("Apply rural/urban filtering to the data? (y/n)").strip().lower()
     if use_function == "y":
         mode_input = input("(Modes: 'u' for urban, 'r' for rural) [answer]: ").strip().lower()
         mode = "urban" if mode_input == "u" else "rural"
+
+        t0 = time.perf_counter()
         final_places = apply_proximity_order(final_places, all_places, mode, decay_km=lambda_km)
-    
+        timings["proximity_order"] = time.perf_counter() - t0
+
+    # 4. Guardar en CSV
+    t0 = time.perf_counter()
     save_to_csv(final_places, output_path=f"email_list_{iso}.csv")
-    elapsed = time.perf_counter() - start_time
-    print(f"Total runtime: {elapsed:.2f}s")
+    timings["save_csv"] = time.perf_counter() - t0
+
+    total_elapsed = time.perf_counter() - total_start
+
+    print("\n--- Runtime breakdown ---")
+    for phase, elapsed in timings.items():
+        pct = (elapsed / total_elapsed * 100) if total_elapsed > 0 else 0
+        print(f"{phase}: {elapsed:.2f}s ({pct:.1f}%)")
+    print(f"Total runtime: {total_elapsed:.2f}s")
+
+
+    
 
 
         
