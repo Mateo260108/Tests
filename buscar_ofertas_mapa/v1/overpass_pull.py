@@ -7,7 +7,7 @@ contact_email = os.getenv("USER_EMAIL", "generic_user@example.com")
 def pull_list_from_api(iso_code):
     url = "https://overpass-api.de/api/interpreter"
     query = f"""
-    [out:json][timeout:60];
+    [out:json][timeout:600];
     area["ISO3166-1"="{iso_code.upper()}"][admin_level=2]->.searchArea;
     (
       nwr(area.searchArea)["tourism"="hostel"];
@@ -22,7 +22,7 @@ def pull_list_from_api(iso_code):
 
     for tries in range(5):
         try:
-            response = requests.post(url, data={"data": query}, headers=headers, timeout=65)
+            response = requests.post(url, data={"data": query}, headers=headers, timeout=600)
             if response.status_code == 200:
                 print("Request completed successfully. Pulling data...")
                 elements = response.json().get("elements", [])
