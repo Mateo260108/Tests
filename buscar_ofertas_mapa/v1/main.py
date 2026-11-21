@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from translating import expand_keywords
-from overpass_pull import pull_list_from_api
 from filter_and_merge import email_lists, scrape_and_merge
 from neighbours import order_by_relevance_and_proximity, lambda_km
 
@@ -24,6 +23,7 @@ token_to_fields = {
     "6b": ["facebook"],
     "6c": ["linkedin"],
     "7": ["lat", "lon"],
+    "8": ["score_s"],
 }
 
 def parse_column_selection(raw_input):
@@ -80,8 +80,8 @@ def save_to_csv(rows, output_path="email_list.csv"):
 if __name__ == "__main__":
     total_start = time.perf_counter()
     timings = {}
-    iso = config["countries"]["Norway"]["iso"]
-    local_lang = config["countries"]["Norway"]["lang"]
+    iso = config["countries"]["Iceland"]["iso"]
+    local_lang = config["countries"]["Iceland"]["lang"]
     
     raw_keywords_input = input("Priority keywords (comma-separated, leave empty for none): ")
     user_keywords = []
@@ -116,6 +116,7 @@ if __name__ == "__main__":
             "|--- 6b. Facebook link\n"
             "|--- 6c. Linkedin link\n"
             "7. coordinates\n"
+            "8. score_s\n"
             "---"
         )
     raw_cols = input("(if you want more than one, separate the numbers with commas. e.g. 2x, 3, 6a, 7): ")

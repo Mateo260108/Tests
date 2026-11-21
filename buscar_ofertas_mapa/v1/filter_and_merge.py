@@ -161,6 +161,7 @@ def scrape_and_merge(iso_code, relevant_keywords=None, need_socials=False):
             place_copy["email"] = found_email
         if found_phone and not (place_copy.get("phone") or ""):
             place_copy["phone"] = found_phone
+        place_copy.update(socials)
         place_copy["relevance"] = "relevant" if has_relevant_match(resp.text, keyword_list) else "regular"
         scraped_list.append(place_copy)
         print(
