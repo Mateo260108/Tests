@@ -12,6 +12,57 @@ from neighbours import order_by_relevance_and_proximity, lambda_km
 with open("config.json", "r", encoding="utf-8") as file:
     config = json.load(file)
 
+default_tokens = ["1", "2"]
+
+token_to_fields = {
+    "1": ["name"],
+    "2": ["category"],
+    "3": ["web"],
+    "4": ["email"],
+    "5": ["phone"],
+    "6a": ["instagram"],
+    "6b": ["facebook"],
+    "6c": ["linkedin"],
+    "7": ["lat", "lon"],
+}
+
+def parse_column_selection(raw_input):
+    selected_tokens = list(default_tokens)
+    tokens = [t.strip() for t in (raw_input or "").split(",") if t.strip()]
+    for token in tokens:
+        if token.endswith("x"):
+            base = token[:-1]
+            if base in selected_tokens:
+                selected_tokens.remove(base)
+
+        elif token in token_to_fields and token not in selected_tokens:
+            selected_tokens.append(token)
+
+    columns = []
+    for token in selected_tokens:
+        for field in token_to_fields[token]:
+            if field not in columns:
+                columns.append(field)
+
+    return columns
+
+def filtering_output(rows, columns, allow_empty=True):
+    if not rows or not columns:
+        return []
+
+    output = []
+    for row in rows:
+        if not allow_empty:
+            has_all = all(str(row.get(col) or "").strip() != "" for col in columns)
+            if not has_all:
+                continue
+
+        projected = {col: row.get(col, "") for col in columns}
+        output.append(projected)
+
+    return output
+
+
 def save_to_csv(rows, output_path="email_list.csv"):
     print("Saving to CSV format file...")
     if not rows:
@@ -29,8 +80,8 @@ def save_to_csv(rows, output_path="email_list.csv"):
 if __name__ == "__main__":
     total_start = time.perf_counter()
     timings = {}
-    iso = "IS"
-    local_lang = config["countries"]["Iceland"]["lang"]
+    iso = config["countries"]["Norway"]["iso"]
+    local_lang = config["countries"]["Norway"]["lang"]
     
     raw_keywords_input = input("Priority keywords (comma-separated, leave empty for none): ")
     user_keywords = []
@@ -49,14 +100,34 @@ if __name__ == "__main__":
     # 2. Traducción de keywords para emails
     t0 = time.perf_counter()
     email_lists()
-    timings["translate_mail_keywords"] = time.perf_counter() - t0
+    timings["translate_email_keywords"] = time.perf_counter() - t0
 
-    # 3. Extracción Overpass + scraping + merge
+    # 3. Pedir columnas de output
+    print(
+            "\nSelect the output rows:\n"
+            "---\n"
+            "1. name (by default, 1x if not wanted)\n"
+            "2. type (by default, 2x if not wanted)\n"
+            "3. web\n"
+            "4. email\n"
+            "5. phone number\n"
+            "6. social media:\n"
+            "|--- 6a. Instagram link\n"
+            "|--- 6b. Facebook link\n"
+            "|--- 6c. Linkedin link\n"
+            "7. coordinates\n"
+            "---"
+        )
+    raw_cols = input("(if you want more than one, separate the numbers with commas. e.g. 2x, 3, 6a, 7): ")
+    selected_columns = parse_column_selection(raw_cols)
+    need_socials = any(col in selected_columns for col in ("instagram", "facebook", "linkedin"))
+
+    # 4. Extracción Overpass + scraping + merge
     t0 = time.perf_counter()
-    final_places, all_places = scrape_and_merge(iso, relevant_keywords=user_keywords)
+    final_places, all_places = scrape_and_merge(iso, relevant_keywords=user_keywords, need_socials=need_socials)
     timings["scrape_and_merge"] = time.perf_counter() - t0
 
-    # 4. Ordenar por vecinos y relevancia
+    # 5. Ordenar por vecinos y relevancia
     use_function = input("Apply rural/urban filtering to the data? (y/n)").strip().lower()
     use_proximity = use_function == "y"
     if use_proximity:
@@ -68,14 +139,18 @@ if __name__ == "__main__":
             final_places,
             all_places,
             use_proximity=use_proximity,
-            mode="rural",
+            mode=mode,
             decay_km=lambda_km,
         )
         timings["proximity_order"] = time.perf_counter() - t0
 
-    # 5. Guardar en CSV
+    # 6. Guardar en CSV
+    empty_ans = input("Show results with empty selected columns? (y/n): ").strip().lower()
+    allow_empty = empty_ans != "n"
+
     t0 = time.perf_counter()
-    save_to_csv(final_places, output_path=f"email_list_{iso}.csv")
+    exported_rows = filtering_output(final_places, selected_columns, allow_empty=allow_empty)
+    save_to_csv(exported_rows, output_path=f"email_list_{iso}.csv")
     timings["save_csv"] = time.perf_counter() - t0
 
     #Conteo final
