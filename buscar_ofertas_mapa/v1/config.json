@@ -1,25 +1,30 @@
 {
   "countries": {
-    "Iceland": {"iso": "IS", "lang": "is"},
-    "Norway": {"iso": "NO", "lang": "no"},
-    "Finland": {"iso": "FI", "lang": "fi"},
-    "Switzerland": {"iso": "CH", "lang": "de"}
+    "Iceland": {"iso": "IS", "lang": ["is", "en"]},
+    "Portugal": {"iso": "PT", "lang": ["pt", "en"]},
+    "Spain": {"iso": "ES", "lang": ["es", "ca", "eu", "en"]},
+    "Andorra": {"iso": "AD", "lang": ["ca", "es", "fr", "en"]},
+    "France": {"iso": "FR", "lang": ["fr", "ca", "en"]},
+    "Monaco":  {"iso": "MC", "lang": ["fr", "it", "en"]},
+    "Italy": {"iso": "IT", "lang": ["it", "de", "fr", "en"]},
+    "San Marino": {"iso": "SM", "lang": ["it", "en"]},
+    "Switzerland": {"iso": "CH", "lang": ["it", "de", "fr", "en"]},
+    "Austria": {"iso": "AT", "lang": ["de", "en"]},
+    "Liechtenstein": {"iso": "LI", "lang": ["de", "en"]},
+    "Germany": {"iso": "DE", "lang": ["de", "en"]},
+    "Netherlands": {"iso": "NL", "lang": ["nl", "en"]},
+    "Belgium": {"iso": "BE", "lang": ["nl", "fr", "en"]},
+    "United Kingdom": {"iso": "GB", "lang": ["en", "cy", "ga"]}, 
+    "Ireland": {"iso": "IE", "lang": ["ga", "en"]},
+    "Norway": {"iso": "NO", "lang": ["no", "en"]},
+    "Faroe Islands": {"iso": "FO", "lang": ["da", "en", "fo"]},
+    "Sweden": {"iso": "SE", "lang": ["sv", "fi", "en"]},
+    "Finland": {"iso": "FI", "lang": ["fi", "sv", "en"]},
+    "Denmark": {"iso": "DK", "lang": ["da", "de", "en", "fo"]}
   },
 
   "false_ends": [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".js", ".css", "wixpress.com", "sentry.io", "example.com"],
   "HEADERS": {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-  },
-
-  "discard_terms_EN": [
-    "noreply", "no-reply", "donotreply", "privacy", "gdpr", "dpo",
-    "webmaster", "admin", "support", "billing", "invoice", "accounting",
-    "newsletter", "press", "media", "security", "abuse", "postmaster"
-  ],
-
-  "max_priority_EN": [
-    "jobs", "career", "careers", "work", "hr",
-    "info", "contact", "post", "office", "hello",
-    "reception", "frontdesk", "stay", "mail"
-  ]
+  }
 }

@@ -1,0 +1,313 @@
+{ 
+  "discard_terms": {
+    "noreply": {
+        "de": "keineantwort", "ca": "nos resposta", "da": "intetsvar",
+        "sco": "nae reply", "es": "sinrespuesta", "fi": "eivastausta",
+        "fo": "eingin svar", "fr": "pasdereponse", "cy": "dimateb",
+        "eu": "erantzunikgabe", "en": "noreply", "is": "ekkisvar",
+        "ga": "ganfreagra", "it": "nonrispondere", "lb": "kengäntwert",
+        "nl": "geenantwoord", "no": "ingenrespons", "pt": "naoresponda",
+        "sv": "ingetsvar"
+    },
+    "no-reply": {
+        "de": "no-reply", "ca": "no-reply", "da": "no-reply",
+        "sco": "no-reply", "es": "no-reply", "fi": "no-reply",
+        "fo": "no-reply", "fr": "no-reply", "cy": "no-reply",
+        "eu": "no-reply", "en": "no-reply", "is": "no-reply",
+        "ga": "no-reply", "it": "no-reply", "lb": "no-reply",
+        "nl": "no-reply", "no": "no-reply", "pt": "no-reply",
+        "sv": "no-reply"
+    },
+    "donotreply": {
+        "de": "bittenichtantworten", "ca": "noprespongueu",
+        "da": "svarikke", "sco": "dinnae reply",
+        "es": "nop responder", "fi": "älävastaa",
+        "fo": "svaraikki", "fr": "nepasrepondre",
+        "cy": "peidiwchagatteb", "eu": "ezerantzun",
+        "en": "donotreply", "is": "ekki svara",
+        "ga": "nófreagair", "it": "nonrispondere",
+        "lb": "netäntweren", "nl": "nietantwoorden",
+        "no": "ikkesvar", "pt": "naoresponder",
+        "sv": "svara inte"
+    },
+    "privacy": {
+        "de": "datenschutz", "ca": "privacitat", "da": "privatliv",
+        "sco": "privacy", "es": "privacidad", "fi": "yksityisyys",
+        "fo": "privatlív", "fr": "confidentialite", "cy": "preifatrwydd",
+        "eu": "pribatutasuna", "en": "privacy", "is": "einkalif",
+        "ga": "pribháideachas", "it": "privacy", "lb": "dateschutz",
+        "nl": "privacy", "no": "personvern", "pt": "privacidade",
+        "sv": "integritet"
+    },
+    "gdpr": {
+        "de": "dsgvo", "ca": "rgpd", "da": "gdpr",
+        "sco": "gdpr", "es": "rgpd", "fi": "gdpr",
+        "fo": "gdpr", "fr": "rgpd", "cy": "gdpr",
+        "eu": "gdpr", "en": "gdpr", "is": "gdpr",
+        "ga": "gdpr", "it": "gdpr", "lb": "gdpr",
+        "nl": "avg", "no": "gdpr", "pt": "rgpd",
+        "sv": "gdpr"
+    },
+    "dpo": {
+        "de": "datenschutzbeauftragter", "ca": "dpo",
+        "da": "databeskyttelsesrådgiver", "sco": "dpo",
+        "es": "dpd", "fi": "tietosuojavastaava",
+        "fo": "dpo", "fr": "dpo", "cy": "dpo",
+        "eu": "dpo", "en": "dpo", "is": "dpo",
+        "ga": "dpo", "it": "dpo", "lb": "dpo",
+        "nl": "fg", "no": "personvernombud", "pt": "encarregado",
+        "sv": "dataskyddsombud"
+    },
+    "webmaster": {
+        "de": "webmaster", "ca": "webmaster", "da": "webmaster",
+        "sco": "webmaster", "es": "webmaster", "fi": "webmaster",
+        "fo": "webmaster", "fr": "webmaster", "cy": "webmaster",
+        "eu": "webmaster", "en": "webmaster", "is": "vefstjori",
+        "ga": "webmaster", "it": "webmaster", "lb": "webmaster",
+        "nl": "webmaster", "no": "webmaster", "pt": "webmaster",
+        "sv": "webmaster"
+    },
+    "admin": {
+        "de": "verwaltung", "ca": "administracio", "da": "admin",
+        "sco": "admin", "es": "administracion", "fi": "yllapito",
+        "fo": "umsiting", "fr": "administration", "cy": "gweinyddiaeth",
+        "eu": "administrazioa", "en": "admin", "is": "stjorn",
+        "ga": "riartho", "it": "amministrazione", "lb": "verwaltung",
+        "nl": "beheer", "no": "administrasjon", "pt": "administracao",
+        "sv": "administration"
+    },
+    "support": {
+        "de": "hilfe", "ca": "suport", "da": "support",
+        "sco": "support", "es": "soporte", "fi": "tuki",
+        "fo": "support", "fr": "assistance", "cy": "cefnogaeth",
+        "eu": "laguntza", "en": "support", "is": "adstod",
+        "ga": "tacaiocht", "it": "assistenza", "lb": "ënnerstëtzung",
+        "nl": "ondersteuning", "no": "kundestotte", "pt": "suporte",
+        "sv": "support"
+    },
+    "billing": {
+        "de": "abrechnung", "ca": "facturacio", "da": "fakturering",
+        "sco": "billing", "es": "facturacion", "fi": "laskutus",
+        "fo": "rokning", "fr": "facturation", "cy": "bilio",
+        "eu": "fakturazioa", "en": "billing", "is": "greidsla",
+        "ga": "billeadoireacht", "it": "fatturazione", "lb": "rechnung",
+        "nl": "facturatie", "no": "fakturering", "pt": "faturacao",
+        "sv": "fakturering"
+    },
+    "invoice": {
+        "de": "rechnung", "ca": "factura", "da": "faktura",
+        "sco": "invoice", "es": "factura", "fi": "lasku",
+        "fo": "rokning", "fr": "facture", "cy": "anfoneb",
+        "eu": "faktura", "en": "invoice", "is": "reikningur",
+        "ga": "sonrasc", "it": "fattura", "lb": "rechnung",
+        "nl": "factuur", "no": "faktura", "pt": "fatura",
+        "sv": "faktura"
+    },
+    "accounting": {
+        "de": "buchhaltung", "ca": "comptabilitat",
+        "da": "regnskab", "sco": "accounting",
+        "es": "contabilidad", "fi": "kirjanpito",
+        "fo": "bokhald", "fr": "comptabilite",
+        "cy": "cyfrifyddu", "eu": "kontabilitatea",
+        "en": "accounting", "is": "bokhald",
+        "ga": "cuntasaiocht", "it": "contabilita",
+        "lb": "buchhaltung", "nl": "boekhouding",
+        "no": "regnskap", "pt": "contabilidade",
+        "sv": "redovisning"
+    },
+    "newsletter": {
+        "de": "newsletter", "ca": "butlleti", "da": "nyhedsbrev",
+        "sco": "newsletter", "es": "boletin", "fi": "uutiskirje",
+        "fo": "tíðindabræv", "fr": "infolettre", "cy": "cylchlythyr",
+        "eu": "buletina", "en": "newsletter", "is": "frettabref",
+        "ga": "nuachtlitir", "it": "newsletter", "lb": "newsletter",
+        "nl": "nieuwsbrief", "no": "nyhetsbrev", "pt": "boletim",
+        "sv": "nyhetsbrev"
+    },
+    "press": {
+        "de": "presse", "ca": "premsa", "da": "presse",
+        "sco": "press", "es": "prensa", "fi": "lehdisto",
+        "fo": "pressa", "fr": "presse", "cy": "wasg",
+        "eu": "prentsa", "en": "press", "is": "fjolmidlar",
+        "ga": "preas", "it": "stampa", "lb": "press",
+        "nl": "pers", "no": "presse", "pt": "imprensa",
+        "sv": "press"
+    },
+    "media": {
+        "de": "medien", "ca": "mitjans", "da": "medier",
+        "sco": "media", "es": "medios", "fi": "media",
+        "fo": "miðlar", "fr": "medias", "cy": "cyfryngau",
+        "eu": "hedabideak", "en": "media", "is": "fjolmidlar",
+        "ga": "meain", "it": "media", "lb": "medien",
+        "nl": "media", "no": "media", "pt": "midia",
+        "sv": "media"
+    },
+    "security": {
+        "de": "sicherheit", "ca": "seguretat", "da": "sikkerhed",
+        "sco": "security", "es": "seguridad", "fi": "turvallisuus",
+        "fo": "trygd", "fr": "securite", "cy": "diogelwch",
+        "eu": "segurtasuna", "en": "security", "is": "oryggi",
+        "ga": "slándáil", "it": "sicurezza", "lb": "secherheet",
+        "nl": "beveiliging", "no": "sikkerhet", "pt": "seguranca",
+        "sv": "sakerhet"
+    },
+    "abuse": {
+        "de": "missbrauch", "ca": "abus", "da": "misbrug",
+        "sco": "abuse", "es": "abuso", "fi": "vaarinkaytto",
+        "fo": "misnottan", "fr": "abus", "cy": "camdriniaeth",
+        "eu": "gehiegikeria", "en": "abuse", "is": "misnotkun",
+        "ga": "drochúsáid", "it": "abuso", "lb": "mëssbrauch",
+        "nl": "misbruik", "no": "misbruk", "pt": "abuso",
+        "sv": "missbruk"
+    },
+    "postmaster": {
+        "de": "postmaster", "ca": "postmaster", "da": "postmaster",
+        "sco": "postmaster", "es": "postmaster", "fi": "postmaster",
+        "fo": "postmaster", "fr": "postmaster", "cy": "postmaster",
+        "eu": "postmaster", "en": "postmaster", "is": "postmaster",
+        "ga": "postmaster", "it": "postmaster", "lb": "postmaster",
+        "nl": "postmaster", "no": "postmaster", "pt": "postmaster",
+        "sv": "postmaster"
+    }
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+  "max_priority_terms": {
+    "jobs": {
+        "de": "stellenangebote", "ca": "feina", "da": "job",
+        "sco": "jobs", "es": "empleo", "fi": "tyopaikat",
+        "fo": "starv", "fr": "emploi", "cy": "swyddi",
+        "eu": "lanpostuak", "en": "jobs", "is": "storf",
+        "ga": "poist", "it": "lavoro", "lb": "stellen",
+        "nl": "vacatures", "no": "stillinger", "pt": "emprego",
+        "sv": "jobb"
+    },
+    "career": {
+        "de": "karriere", "ca": "carrera", "da": "karriere",
+        "sco": "career", "es": "carrera", "fi": "ura",
+        "fo": "yrkisleið", "fr": "carriere", "cy": "gyrfa",
+        "eu": "karrera", "en": "career", "is": "starfsferill",
+        "ga": "gairm", "it": "carriera", "lb": "karriere",
+        "nl": "carriere", "no": "karriere", "pt": "carreira",
+        "sv": "karriar"
+    },
+    "careers": {
+        "de": "karriere", "ca": "carreres", "da": "karrierer",
+        "sco": "careers", "es": "carreras", "fi": "urat",
+        "fo": "yrkisleiðir", "fr": "carrieres", "cy": "gyrfaoedd",
+        "eu": "karrerak", "en": "careers", "is": "storf",
+        "ga": "gairmeacha", "it": "carriere", "lb": "karrièren",
+        "nl": "carrieres", "no": "karrierer", "pt": "carreiras",
+        "sv": "karriärer"
+    },
+    "work": {
+        "de": "arbeit", "ca": "treball", "da": "arbejde",
+        "sco": "wark", "es": "trabajo", "fi": "tyo",
+        "fo": "arbeiði", "fr": "travail", "cy": "gwaith",
+        "eu": "lana", "en": "work", "is": "vinna",
+        "ga": "obair", "it": "lavoro", "lb": "aarbecht",
+        "nl": "werk", "no": "arbeid", "pt": "trabalho",
+        "sv": "arbete"
+    },
+    "hr": {
+        "de": "personal", "ca": "rrhh", "da": "hr",
+        "sco": "hr", "es": "rrhh", "fi": "henkilosto",
+        "fo": "hr", "fr": "rh", "cy": "ad",
+        "eu": "giza-baliabideak", "en": "hr", "is": "mannauður",
+        "ga": "acmhainni", "it": "risorseumane", "lb": "personal",
+        "nl": "personeelszaken", "no": "hr", "pt": "rh",
+        "sv": "hr"
+    },
+    "info": {
+        "de": "info", "ca": "info", "da": "info",
+        "sco": "info", "es": "info", "fi": "info",
+        "fo": "info", "fr": "info", "cy": "gwybodaeth",
+        "eu": "info", "en": "info", "is": "upplysingar",
+        "ga": "eolas", "it": "info", "lb": "info",
+        "nl": "info", "no": "info", "pt": "info",
+        "sv": "info"
+    },
+    "contact": {
+        "de": "kontakt", "ca": "contacte", "da": "kontakt",
+        "sco": "contact", "es": "contacto", "fi": "yhteystiedot",
+        "fo": "samband", "fr": "contact", "cy": "cyswllt",
+        "eu": "kontaktua", "en": "contact", "is": "samband",
+        "ga": "teagmhail", "it": "contatto", "lb": "kontakt",
+        "nl": "contact", "no": "kontakt", "pt": "contato",
+        "sv": "kontakt"
+    },
+    "post": {
+        "de": "post", "ca": "correu", "da": "post",
+        "sco": "post", "es": "correo", "fi": "posti",
+        "fo": "postur", "fr": "courrier", "cy": "post",
+        "eu": "posta", "en": "post", "is": "postur",
+        "ga": "post", "it": "posta", "lb": "post",
+        "nl": "post", "no": "post", "pt": "correio",
+        "sv": "post"
+    },
+    "office": {
+        "de": "buero", "ca": "oficina", "da": "kontor",
+        "sco": "office", "es": "oficina", "fi": "toimisto",
+        "fo": "skrivstova", "fr": "bureau", "cy": "swyddfa",
+        "eu": "bulegoa", "en": "office", "is": "skrifstofa",
+        "ga": "oifig", "it": "ufficio", "lb": "bureau",
+        "nl": "kantoor", "no": "kontor", "pt": "escritorio",
+        "sv": "kontor"
+    },
+    "hello": {
+        "de": "hallo", "ca": "hola", "da": "hej",
+        "sco": "hullo", "es": "hola", "fi": "hei",
+        "fo": "halló", "fr": "bonjour", "cy": "helo",
+        "eu": "kaixo", "en": "hello", "is": "halló",
+        "ga": "dia dhuit", "it": "ciao", "lb": "moien",
+        "nl": "hallo", "no": "hei", "pt": "ola",
+        "sv": "hej"
+    },
+    "reception": {
+        "de": "empfang", "ca": "recepcio", "da": "reception",
+        "sco": "reception", "es": "recepcion", "fi": "vastaanotto",
+        "fo": "mottøka", "fr": "reception", "cy": "derbynfa",
+        "eu": "harrera", "en": "reception", "is": "mottaka",
+        "ga": "fáilte", "it": "reception", "lb": "receptioun",
+        "nl": "receptie", "no": "resepsjon", "pt": "rececao",
+        "sv": "reception"
+    },
+    "frontdesk": {
+        "de": "rezeption", "ca": "recepcio", "da": "reception",
+        "sco": "frontdesk", "es": "recepcion", "fi": "vastaanotto",
+        "fo": "mottøka", "fr": "accueil", "cy": "derbynfa",
+        "eu": "harrera", "en": "frontdesk", "is": "mottaka",
+        "ga": "deascfáilte", "it": "reception", "lb": "receptioun",
+        "nl": "receptie", "no": "resepsjon", "pt": "rececao",
+        "sv": "reception"
+    },
+    "stay": {
+        "de": "aufenthalt", "ca": "estada", "da": "ophold",
+        "sco": "stay", "es": "estancia", "fi": "oleskelu",
+        "fo": "dvold", "fr": "sejour", "cy": "arhosiad",
+        "eu": "egonaldia", "en": "stay", "is": "dvöl",
+        "ga": "fanacht", "it": "soggiorno", "lb": "openthalt",
+        "nl": "verblijf", "no": "opphold", "pt": "estadia",
+        "sv": "vistelse"
+    },
+    "mail": {
+        "de": "mail", "ca": "correu", "da": "post",
+        "sco": "mail", "es": "correo", "fi": "posti",
+        "fo": "postur", "fr": "courriel", "cy": "post",
+        "eu": "posta", "en": "mail", "is": "postur",
+        "ga": "post", "it": "posta", "lb": "post",
+        "nl": "mail", "no": "post", "pt": "correio",
+        "sv": "post"
+    }
+  }
+}

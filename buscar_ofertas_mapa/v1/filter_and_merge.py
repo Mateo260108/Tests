@@ -1,25 +1,19 @@
-import random
-import requests
-import time
 import json
+import random
 import re
+import time
+import requests
 
-from translating import build_lang_terms
+from translating import get_email_terms_for_langs
 from overpass_pull import pull_list_from_api
-
 
 with open("config.json", "r", encoding="utf-8") as file:
     config = json.load(file)
 
-country_info = config["countries"]["Iceland"]
-local_lang = country_info["lang"]
+default_country = config["countries"].get("Iceland", next(iter(config["countries"].values())))
+DEFAULT_LOCAL_LANGS = list(default_country.get("lang", ["en"]))
 
-def email_lists():
-    email_discard_terms = tuple(build_lang_terms(config["discard_terms_EN"], local_lang))
-    email_max_priority = build_lang_terms(config["max_priority_EN"], local_lang)
-    return email_discard_terms, email_max_priority
-
-false_ends = tuple(x.lower() for x in config.get("false_ends", []))
+false_ends = tuple(str(x).lower() for x in config.get("false_ends", []))
 headers_web = config.get("HEADERS", {"User-Agent": "Mozilla/5.0"})
 
 EMAIL_REGEX = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
@@ -28,11 +22,19 @@ INSTAGRAM_REGEX = re.compile(r"https?://(?:www\.)?instagram\.com/[A-Za-z0-9._-]+
 FACEBOOK_REGEX = re.compile(r"https?://(?:www\.|m\.)?facebook\.com/[A-Za-z0-9._-]+/?", re.IGNORECASE)
 LINKEDIN_REGEX = re.compile(r"https?://(?:[a-z]{2,3}\.)?linkedin\.com/(?:company|in)/[A-Za-z0-9._-]+/?", re.IGNORECASE)
 
+
+def email_lists(local_langs=None):
+    langs = local_langs if local_langs else DEFAULT_LOCAL_LANGS
+    discard_terms, max_priority = get_email_terms_for_langs(langs)
+    return tuple(discard_terms), max_priority
+
+
 def has_relevant_match(html_text, keywords):
     if not html_text:
         return False
     text_lower = html_text.lower()
     return any(keyword in text_lower for keyword in keywords)
+
 
 def filter_results(all_places, need_socials=False):
     web_included = []
@@ -67,6 +69,7 @@ def filter_results(all_places, need_socials=False):
         "already_with_contact": already_with_contact,
     }
 
+
 def extract_phone_number(html_text):
     if not html_text:
         return ""
@@ -74,14 +77,14 @@ def extract_phone_number(html_text):
         cleaned = re.sub(r"[^\d+]", "", match)
         digits = re.sub(r"\D", "", cleaned)
         if 7 <= len(digits) <= 15:
-                return cleaned
-        
+            return cleaned
     return ""
+
 
 def extract_social_links(html_text):
     if not html_text:
-        return {"instagram": "", "facebook" : "", "linkedin": ""}
-    
+        return {"instagram": "", "facebook": "", "linkedin": ""}
+
     ig_matches = INSTAGRAM_REGEX.findall(html_text)
     fb_matches = FACEBOOK_REGEX.findall(html_text)
     li_matches = LINKEDIN_REGEX.findall(html_text)
@@ -92,8 +95,9 @@ def extract_social_links(html_text):
 
     return {"instagram": ig, "facebook": fb, "linkedin": li}
 
-def choose_email(candidates):
-    _ , max_priority = email_lists()
+
+def choose_email(candidates, local_langs=None):
+    _, max_priority = email_lists(local_langs=local_langs)
     for prefix in max_priority:
         for email in candidates:
             local_part = email.split("@", 1)[0]
@@ -102,9 +106,9 @@ def choose_email(candidates):
     return candidates[0]
 
 
-def scrape_and_merge(iso_code, relevant_keywords=None, need_socials=False):
+def scrape_and_merge(iso_code, relevant_keywords=None, need_socials=False, local_langs=None):
     keyword_list = [k.strip().lower() for k in (relevant_keywords or []) if k and k.strip()]
-    discard_terms, _ = email_lists()
+    discard_terms, _ = email_lists(local_langs=local_langs)
     all_places = pull_list_from_api(iso_code)
     if not all_places:
         return [], []
@@ -140,7 +144,7 @@ def scrape_and_merge(iso_code, relevant_keywords=None, need_socials=False):
             if not e.endswith(false_ends) and not any(f in e for f in false_ends)
         ]
         valid_emails = [e for e in filtered_ends if not e.startswith(discard_terms)]
-        found_email = choose_email(valid_emails) if valid_emails else ""
+        found_email = choose_email(valid_emails, local_langs=local_langs) if valid_emails else ""
         found_phone = extract_phone_number(resp.text)
         socials = extract_social_links(resp.text)
 
