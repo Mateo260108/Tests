@@ -1,4 +1,12 @@
 {
   "en|is|lodge": "lodge",
-  "en|is|cabin": "cabin"
+  "en|is|cabin": "cabin",
+  "es|is|cabaña": "cabaña",
+  "es|en|cabaña": "cabaña",
+  "es|is|bosque": "bosque",
+  "es|en|bosque": "bosque",
+  "es|is|naturaleza": "naturaleza",
+  "es|en|naturaleza": "naturaleza",
+  "es|is|aislado": "aislado",
+  "es|en|aislado": "aislado"
 }

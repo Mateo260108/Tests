@@ -46,10 +46,6 @@ def _normalize_langs(langs):
 
 
 def get_universal_terms(group_name, langs=None, ordered_keys=None):
-    """
-    Busca términos en universal_terms.json ('discard_terms' o 'max_priority_terms')
-    únicamente para los idiomas indicados en `langs`.
-    """
     group_data = UNIVERSAL_TERMS.get(group_name, {})
     if not isinstance(group_data, dict):
         return []
@@ -81,7 +77,6 @@ def get_universal_terms(group_name, langs=None, ordered_keys=None):
 
 
 def get_email_terms_for_langs(langs):
-    """Devuelve (discard_terms, max_priority_terms) para la lista de idiomas del país."""
     discard = get_universal_terms("discard_terms", langs=langs)
     priority = get_universal_terms("max_priority_terms", langs=langs)
     return discard, priority
@@ -111,10 +106,6 @@ def translate_term(term, source_lang, target_lang):
 
 
 def expand_keywords(raw_keywords, input_lang="en", local_langs=None):
-    """
-    Expande las keywords introducidas por el usuario al idioma de entrada
-    y a los idiomas configurados para el territorio (`local_langs`).
-    """
     if not raw_keywords:
         return []
 
