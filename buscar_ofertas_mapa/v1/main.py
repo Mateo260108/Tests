@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from translating import expand_keywords
-from filter_and_merge import email_lists, scrape_and_merge
+from filter_and_merge import email_lists, scrape_and_merge, separate_unique_and_chains, save_chains_to_json
 from neighbours import order_by_relevance_and_proximity, lambda_km
 
 with open("config.json", "r", encoding="utf-8") as file:
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     t0 = time.perf_counter()
     input_lang = input("Input language code (e.g. es, en, is) [default: en]: ").strip().lower() or "en"
 
-    country_name = "Iceland"
+    country_name = "Switzerland"
     country_info = config["countries"][country_name]
     iso = country_info["iso"]
     local_langs = [str(l).strip().lower() for l in country_info.get("lang", ["en"]) if str(l).strip()]
@@ -113,17 +113,30 @@ if __name__ == "__main__":
     print(f"Input lang: {input_lang} | Fixed country: {country_name} ({iso}) | Local langs: {local_langs}")
     print(f"Loaded {len(discard_terms)} discard terms and {len(priority_terms)} priority terms.")
 
-    # 2. Keywords del usuario (ya usa input_lang sin volver a preguntarlo)
+    # 2. Keywords del usuario. Buenas y malas
     raw_keywords_input = input("Priority keywords (comma-separated, leave empty for none): ").strip()
+    raw_negative_keywords_input = input("Negative / irrelevant keywords (comma-separated, leave empty for none): ").strip()
+
     user_keywords = []
-    if raw_keywords_input:
+    negative_keywords = []
+
+    if raw_keywords_input or raw_negative_keywords_input:
         t0 = time.perf_counter()
-        user_keywords = expand_keywords(
-            raw_keywords_input.split(","),
-            input_lang=input_lang,
-            local_langs=local_langs,
-        )
+        if raw_keywords_input:
+            user_keywords = expand_keywords(
+                raw_keywords_input.split(","),
+                input_lang=input_lang,
+                local_langs=local_langs,
+            )
+        if raw_negative_keywords_input:
+            negative_keywords = expand_keywords(
+                raw_negative_keywords_input.split(","),
+                input_lang=input_lang,
+                local_langs=local_langs,
+            )
         timings["translate_keywords"] = time.perf_counter() - t0
+
+    has_keyword_filter = bool(user_keywords or negative_keywords)
 
     # 3. Columnas de output y filtro rural/urbano 
     print(
@@ -146,6 +159,9 @@ if __name__ == "__main__":
     )
     raw_cols = input("(if you want more than one, separate the numbers with commas. e.g. 2x, 3, 6a, 8a): ")
     selected_columns, use_proximity, mode = parse_column_selection(raw_cols)
+    if has_keyword_filter and "relevance" not in selected_columns:
+        selected_columns.append("relevance")
+
     need_socials = any(col in selected_columns for col in ("instagram", "facebook", "linkedin"))
 
     # 4. Extracción Overpass + scraping + merge
@@ -153,6 +169,7 @@ if __name__ == "__main__":
     final_places, all_places = scrape_and_merge(
         iso,
         relevant_keywords=user_keywords,
+        irrelevant_keywords=negative_keywords,
         need_socials=need_socials,
         local_langs=local_langs,
     )
@@ -169,12 +186,23 @@ if __name__ == "__main__":
     )
     timings["proximity_order"] = time.perf_counter() - t0
 
-    # 6. Filtrar vacíos y guardar en CSV
+    export_chains = input("Export chains to a separate JSON file? (y/n): ").strip().lower() == "y"
+
+    unique_places, chains_payload = separate_unique_and_chains(
+        final_places,
+        selected_columns=selected_columns,
+        local_langs=local_langs,
+    )
+
+    if export_chains:
+        save_chains_to_json(chains_payload, output_path=f"chains_{iso}.json")
+
+    # 6. Filtrar vacíos y guardar en CSV (solo sitios únicos)
     empty_ans = input("Show results with empty selected columns? (y/n): ").strip().lower()
     allow_empty = empty_ans != "n"
 
     t0 = time.perf_counter()
-    exported_rows = filtering_output(final_places, selected_columns, allow_empty=allow_empty)
+    exported_rows = filtering_output(unique_places, selected_columns, allow_empty=allow_empty)
     save_to_csv(exported_rows, output_path=f"email_list_{iso}.csv")
     timings["save_csv"] = time.perf_counter() - t0
 

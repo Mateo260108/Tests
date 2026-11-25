@@ -23,8 +23,19 @@
     "Denmark": {"iso": "DK", "lang": ["da", "de", "en", "fo"]}
   },
 
-  "false_ends": [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".js", ".css", "wixpress.com", "sentry.io", "example.com"],
+  "false_ends": [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".js", ".css", "wixpress.com", "sentry.io", "example.com", "@domain.com"],
   "HEADERS": {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-  }
+  },
+
+  "social_blacklist": [
+    "https://www.facebook.com/profile.php", "https://www.facebook.com/pages/", "https://www.facebook.com/share/",
+    "https://www.facebook.com/sharer/", "https://www.facebook.com/people/", "https://www.instagram.com/accounts/",
+    "https://www.facebook.com/tr", "https://www.facebook.com/pg/", "http://www.facebook.com/2008/",
+    "http://www.facebook.com/sharer.php", "https://www.instagram.com/wix", "https://www.facebook.com/wix",
+    "https://il.linkedin.com/company/wix-com", "http://www.facebook.com/sharer/", "https://www.facebook.com/Facebook",
+    "https://www.facebook.com/p/", "http://www.facebook.com/wix", "https://www.facebook.com/pages/", "https://www.facebook.com/H",
+    "https://www.facebook.com/sharer.php", "https://www.facebook.com/events/", "https://www.facebook.com/about/", "https://www.instagram.com/explore/",
+    "https://www.instagram.com/p/", "https://www.linkedin.com/company/h", ""
+    ]
 }

@@ -4,6 +4,7 @@ import re
 import time
 import requests
 import threading
+from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from requests.adapters import HTTPAdapter
 
@@ -27,6 +28,14 @@ INSTAGRAM_REGEX = re.compile(r"https?://(?:www\.)?instagram\.com/[A-Za-z0-9._-]+
 FACEBOOK_REGEX = re.compile(r"https?://(?:www\.|m\.)?facebook\.com/[A-Za-z0-9._-]+/?", re.IGNORECASE)
 LINKEDIN_REGEX = re.compile(r"https?://(?:[a-z]{2,3}\.)?linkedin\.com/(?:company|in)/[A-Za-z0-9._-]+/?", re.IGNORECASE)
 
+GENERIC_EMAIL_DOMAINS = {
+    "gmail.com", "googlemail.com", "hotmail.com", "hotmail.es", "hotmail.fr",
+    "outlook.com", "outlook.es", "live.com", "msn.com", "yahoo.com", "yahoo.es",
+    "yahoo.fr", "yahoo.de", "icloud.com", "me.com", "aol.com", "proton.me",
+    "protonmail.com", "gmx.com", "gmx.de", "gmx.ch", "web.de", "bluewin.ch",
+    "sunrise.ch", "hispeed.ch", "orange.fr", "wanadoo.fr", "free.fr", "laposte.net",
+}
+
 def _build_session(pool_size=64):
     session = requests.Session()
     adapter = HTTPAdapter(pool_connections=pool_size, pool_maxsize=pool_size)
@@ -40,12 +49,213 @@ def email_lists(local_langs=None):
     discard_terms, max_priority = get_email_terms_for_langs(langs)
     return tuple(discard_terms), max_priority
 
+def _normalize_blacklist_entry(raw_url):
+    val = (raw_url or "").strip().lower()
+    if not val:
+        return ""
+    if val.startswith("ttps://"):
+        val = "h" + val
+    if not val.startswith(("http://", "https://")):
+        val = "https://" + val
+    parsed = urlparse(val)
+    host = parsed.netloc.removeprefix("www.").removeprefix("m.")
+    path = parsed.path.rstrip("/")
+    return f"{host}{path}" if host else ""
 
-def has_relevant_match(html_text, keywords):
+social_blacklist = {
+    entry for item in config.get("social_blacklist", [])
+    if (entry := _normalize_blacklist_entry(item))
+}
+
+def is_blacklisted_social(url):
+    norm = _normalize_blacklist_entry(url)
+    if not norm:
+        return True
+    for blocked in social_blacklist:
+        if norm == blocked or norm.startswith(blocked + "/"):
+            return True
+    return False
+
+def _normalize_url(url):
+    val = (url or "").strip().lower()
+    if not val:
+        return ""
+    if not val.startswith(("http://", "https://")):
+        val = "https://" + val
+    parsed = urlparse(val)
+    if not parsed.netloc:
+        return ""
+    path = parsed.path.rstrip("/")
+    query = f"?{parsed.query}" if parsed.query else ""
+    return f"{parsed.scheme}://{parsed.netloc}{path}{query}"
+
+def _extract_single_clean_email_domain(email_value, discard_terms=()):
+    raw = (email_value or "").strip().lower()
+    if not raw:
+        return ""
+    
+    parts = [p.strip() for p in re.split(r"[,;\s]+", raw) if p.strip()]
+    if len(parts) != 1:
+        return ""
+
+    email = parts[0]
+    if not EMAIL_REGEX.fullmatch(email):
+        return ""
+    if any(email.endswith(f) or f in email for f in false_ends):
+        return ""
+    if discard_terms and email.startswith(discard_terms):
+        return ""
+
+    _, domain = email.split("@", 1)
+    if not domain or domain in GENERIC_EMAIL_DOMAINS:
+        return ""
+    return domain
+
+def _extract_clean_social(social_value, platform):
+    raw = (social_value or "").strip()
+    if not raw:
+        return ""
+    urls = re.findall(r"https?://[^\s,;]+", raw, flags=re.IGNORECASE)
+    if len(urls) != 1:
+        return ""
+
+    candidate = urls[0].strip()
+    if is_blacklisted_social(candidate):
+        return ""
+
+    patterns = {
+        "instagram": INSTAGRAM_REGEX,
+        "facebook": FACEBOOK_REGEX,
+        "linkedin": LINKEDIN_REGEX,
+    }
+    regex = patterns.get(platform)
+    if not regex or not regex.fullmatch(candidate):
+        return ""
+
+    return _normalize_url(candidate)
+
+def _chain_keys(place, discard_terms=()):
+    keys = []
+
+    exact_web = _normalize_url(place.get("web"))
+    if exact_web:
+        keys.append(("web_exact", exact_web))
+
+    email_domain = _extract_single_clean_email_domain(place.get("email"), discard_terms=discard_terms)
+    if email_domain:
+        keys.append(("email_domain", email_domain))
+
+    for platform in ("instagram", "facebook", "linkedin"):
+        exact_social = _extract_clean_social(place.get(platform), platform)
+        if exact_social:
+            keys.append((f"{platform}_exact", exact_social))
+
+    return keys
+
+def separate_unique_and_chains(places, selected_columns=None, local_langs=None):
+    n = len(places)
+    if n == 0:
+        return [], []
+
+    discard_terms, _ = email_lists(local_langs=local_langs)
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    first_seen_by_key = {}
+    for idx, place in enumerate(places):
+        for key in _chain_keys(place, discard_terms=discard_terms):
+            if key in first_seen_by_key:
+                union(first_seen_by_key[key], idx)
+            else:
+                first_seen_by_key[key] = idx
+
+    groups = {}
+    for idx in range(n):
+        root = find(idx)
+        groups.setdefault(root, []).append(places[idx])
+
+    unique_places = []
+    chain_groups = []
+    for members in groups.values():
+        if len(members) == 1:
+            unique_places.append(members[0])
+        else:
+            chain_groups.append(members)
+
+    candidate_fields = list(selected_columns) if selected_columns else [
+        "name", "category", "web", "email", "phone",
+        "instagram", "facebook", "linkedin", "lat", "lon", "score_s", "relevance"
+    ]
+    loc_base_fields = []
+    for f in ["id"] + candidate_fields:
+        if f not in loc_base_fields:
+            loc_base_fields.append(f)
+
+    chains_payload = []
+    for c_idx, members in enumerate(chain_groups, 1):
+        general = {}
+        shared_fields = set()
+
+        for field in candidate_fields:
+            vals = [str(m.get(field) or "").strip() for m in members]
+            if all(vals) and len(set(vals)) == 1:
+                general[field] = members[0].get(field)
+                shared_fields.add(field)
+
+        locations = []
+        for m in members:
+            loc = {}
+            for field in loc_base_fields:
+                if field == "id":
+                    if m.get("id"):
+                        loc["id"] = m.get("id")
+                    continue
+                if field in shared_fields:
+                    continue
+                val = m.get(field, "")
+                if val != "":
+                    loc[field] = val
+            locations.append(loc)
+
+        chains_payload.append({
+            "chain_id": f"chain_{c_idx}",
+            "location_count": len(members),
+            "general": general,
+            "locations": locations,
+        })
+
+    return unique_places, chains_payload
+
+
+def save_chains_to_json(chains_payload, output_path="chains.json"):
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(chains_payload, f, ensure_ascii=False, indent=2)
+    print(f"Saved {len(chains_payload)} chains to {output_path}")
+
+def classify_relevance(html_text, positive_keywords, negative_keywords):
     if not html_text:
-        return False
+        return "regular"
     text_lower = html_text.lower()
-    return any(keyword in text_lower for keyword in keywords)
+
+    has_negative = any(kw in text_lower for kw in (negative_keywords or []))
+    if has_negative:
+        return "irrelevant"
+
+    has_positive = any(kw in text_lower for kw in (positive_keywords or []))
+    if has_positive:
+        return "relevant"
+
+    return "regular"
 
 
 def filter_results(all_places, need_socials=False):
@@ -68,7 +278,7 @@ def filter_results(all_places, need_socials=False):
             phone_included.append(place)
 
         has_contact = bool(email or phone)
-        if web and (not has_contact or need_socials):
+        if web:
             to_scrape.append(place)
         elif has_contact:
             already_with_contact.append(place)
@@ -97,9 +307,18 @@ def extract_social_links(html_text):
     if not html_text:
         return {"instagram": "", "facebook": "", "linkedin": ""}
 
-    ig_matches = INSTAGRAM_REGEX.findall(html_text)
-    fb_matches = FACEBOOK_REGEX.findall(html_text)
-    li_matches = LINKEDIN_REGEX.findall(html_text)
+    ig_matches = [
+        u for u in INSTAGRAM_REGEX.findall(html_text)
+        if not is_blacklisted_social(u)
+    ]
+    fb_matches = [
+        u for u in FACEBOOK_REGEX.findall(html_text)
+        if not is_blacklisted_social(u)
+    ]
+    li_matches = [
+        u for u in LINKEDIN_REGEX.findall(html_text)
+        if not is_blacklisted_social(u)
+    ]
 
     ig = next((u for u in ig_matches if "/p/" not in u and "/reel/" not in u), ig_matches[0] if ig_matches else "")
     fb = next((u for u in fb_matches if "/sharer" not in u), fb_matches[0] if fb_matches else "")
@@ -117,7 +336,7 @@ def choose_email(candidates, local_langs=None):
                 return email
     return candidates[0]
 
-def _scrape_single_place(session, place, idx, total, discard_terms, keyword_list, local_langs):
+def _scrape_single_place(session, place, idx, total, discard_terms, keyword_list, negative_keyword_list, local_langs):
     url = (place.get("web") or "").strip()
     if url and not url.startswith(("http://", "https://")):
         url = "https://" + url
@@ -125,7 +344,7 @@ def _scrape_single_place(session, place, idx, total, discard_terms, keyword_list
     name = (place.get("name") or "").strip()
 
     try:
-        resp = session.get(url, timeout=12)
+        resp = session.get(url, timeout=30)
     except requests.exceptions.RequestException as e:
         with print_lock:
             print(f"[{idx}/{total}] {name} -> {url} ... Error ({e})")
@@ -167,7 +386,7 @@ def _scrape_single_place(session, place, idx, total, discard_terms, keyword_list
     if found_phone and not (place_copy.get("phone") or ""):
         place_copy["phone"] = found_phone
     place_copy.update(socials)
-    place_copy["relevance"] = "relevant" if has_relevant_match(resp.text, keyword_list) else "regular"
+    place_copy["relevance"] = classify_relevance(resp.text, keyword_list, negative_keyword_list)
 
     with print_lock:
         print(
@@ -187,11 +406,13 @@ def _scrape_single_place(session, place, idx, total, discard_terms, keyword_list
 def scrape_and_merge(
     iso_code,
     relevant_keywords=None,
+    irrelevant_keywords=None,
     need_socials=False,
     local_langs=None,
     max_workers=64,
 ):
     keyword_list = [k.strip().lower() for k in (relevant_keywords or []) if k and k.strip()]
+    negative_keyword_list = [k.strip().lower() for k in (irrelevant_keywords or []) if k and k.strip()]
     discard_terms, _ = email_lists(local_langs=local_langs)
     all_places = pull_list_from_api(iso_code)
     if not all_places:
@@ -218,6 +439,7 @@ def scrape_and_merge(
                         total,
                         discard_terms,
                         keyword_list,
+                        negative_keyword_list,
                         local_langs,
                     )
                     for idx, place in enumerate(to_scrape, 1)
