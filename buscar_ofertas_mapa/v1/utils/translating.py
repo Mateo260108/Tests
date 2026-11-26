@@ -2,11 +2,11 @@ import json
 import os
 from deep_translator import GoogleTranslator
 
-UNIVERSAL_TERMS_FILE = "universal_terms.json"
-CACHE_FILE = "translation_cache.json"
+universal_terms_file = "storage/universal_terms.json"
+cache_file = "storage/translation_cache.json"
 
-
-def _load_json_dict(path):
+#------------------------
+def load_json_dict(path):
     if not os.path.exists(path):
         return {}
     try:
@@ -16,20 +16,18 @@ def _load_json_dict(path):
     except Exception:
         return {}
 
-
-def _save_json_dict(path, data):
+def save_json_dict(path, data):
     try:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
 
+universal_terms = load_json_dict(universal_terms_file)
+translation_cache = load_json_dict(cache_file)
+#---------------------------------------------
 
-UNIVERSAL_TERMS = _load_json_dict(UNIVERSAL_TERMS_FILE)
-translation_cache = _load_json_dict(CACHE_FILE)
-
-
-def _normalize_langs(langs):
+def normalize_langs(langs):
     if isinstance(langs, str):
         raw = [langs]
     elif isinstance(langs, (list, tuple, set)):
@@ -46,11 +44,11 @@ def _normalize_langs(langs):
 
 
 def get_universal_terms(group_name, langs=None, ordered_keys=None):
-    group_data = UNIVERSAL_TERMS.get(group_name, {})
+    group_data = universal_terms.get(group_name, {})
     if not isinstance(group_data, dict):
         return []
 
-    target_langs = _normalize_langs(langs) or ["en"]
+    target_langs = normalize_langs(langs) or ["en"]
     keys = [str(k).strip().lower() for k in (ordered_keys or []) if str(k).strip()]
     if not keys:
         keys = list(group_data.keys())
@@ -75,12 +73,11 @@ def get_universal_terms(group_name, langs=None, ordered_keys=None):
 
     return terms
 
-
-def get_email_terms_for_langs(langs):
+#------------------------------------
+def email_terms_translated(langs):
     discard = get_universal_terms("discard_terms", langs=langs)
     priority = get_universal_terms("max_priority_terms", langs=langs)
     return discard, priority
-
 
 def translate_term(term, source_lang, target_lang):
     clean_term = str(term or "").strip().lower()
@@ -101,7 +98,7 @@ def translate_term(term, source_lang, target_lang):
         result = clean_term
 
     translation_cache[cache_key] = result
-    _save_json_dict(CACHE_FILE, translation_cache)
+    save_json_dict(cache_file, translation_cache)
     return result
 
 
@@ -110,7 +107,7 @@ def expand_keywords(raw_keywords, input_lang="en", local_langs=None):
         return []
 
     source = str(input_lang or "en").strip().lower() or "en"
-    territory_langs = _normalize_langs(local_langs)
+    territory_langs = normalize_langs(local_langs)
 
     target_langs = []
     for lang in ([source] + territory_langs):

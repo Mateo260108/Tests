@@ -2,3 +2,4 @@
 __pycache__/
 *.csv
 chains_*.json
+mailer.py

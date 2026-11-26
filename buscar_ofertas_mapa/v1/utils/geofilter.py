@@ -48,21 +48,3 @@ def apply_proximity_order(places, reference_places, mode="rural", decay_km=lambd
     reverse_mode = mode == "urban"
     ordered.sort(key=lambda x: x["score_s"], reverse=reverse_mode)
     return ordered + no_coords
-
-def order_by_relevance_and_proximity(
-    places,
-    reference_places,
-    use_proximity=False,
-    mode="rural",
-    decay_km=lambda_km,
-):
-    relevant = [dict(p) for p in places if p.get("relevance") == "relevant"]
-    regular = [dict(p) for p in places if p.get("relevance", "regular") == "regular"]
-    irrelevant = [dict(p) for p in places if p.get("relevance") == "irrelevant"]
-
-    if use_proximity:
-        relevant = apply_proximity_order(relevant, reference_places, mode=mode, decay_km=decay_km)
-        regular = apply_proximity_order(regular, reference_places, mode=mode, decay_km=decay_km)
-        irrelevant = apply_proximity_order(irrelevant, reference_places, mode=mode, decay_km=decay_km)
-
-    return relevant + regular + irrelevant

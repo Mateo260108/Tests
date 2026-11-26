@@ -1,15 +1,17 @@
-import csv
-import json
 import time
 from dotenv import load_dotenv
 load_dotenv()
 
-from translating import expand_keywords
-from filter_and_merge import email_lists, scrape_and_merge, separate_unique_and_chains, save_chains_to_json
-from neighbours import order_by_relevance_and_proximity, lambda_km
-
-with open("config.json", "r", encoding="utf-8") as file:
-    config = json.load(file)
+from utils import (
+    email_terms_translated, expand_keywords,
+    separate_unique_and_chains, save_chains_to_json,
+    lambda_km
+)
+from core import (
+    data,
+    scrape_and_merge,
+    order_by_relevance_and_proximity, filtering_output, save_to_csv
+)
 
 default_tokens = ["1", "2"]
 
@@ -26,7 +28,6 @@ token_to_fields = {
     "8a": ["score_s"],
     "8b": ["score_s"],
 }
-
 
 def parse_column_selection(raw_input):
     selected_tokens = list(default_tokens)
@@ -63,38 +64,6 @@ def parse_column_selection(raw_input):
     return columns, use_proximity, mode
 
 
-def filtering_output(rows, columns, allow_empty=True):
-    if not rows or not columns:
-        return []
-
-    output = []
-    for row in rows:
-        if not allow_empty:
-            has_all = all(str(row.get(col) or "").strip() != "" for col in columns)
-            if not has_all:
-                continue
-
-        projected = {col: row.get(col, "") for col in columns}
-        output.append(projected)
-
-    return output
-
-
-def save_to_csv(rows, output_path="email_list.csv"):
-    print("Saving to CSV format file...")
-    if not rows:
-        print("No data to save.")
-        return
-
-    fieldnames = list(rows[0].keys())
-    with open(output_path, "w", encoding="utf-8", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=fieldnames, delimiter="\t")
-        writer.writeheader()
-        writer.writerows(rows)
-
-    print(f"Saved {len(rows)} rows to {output_path}")
-
-
 if __name__ == "__main__":
     total_start = time.perf_counter()
     timings = {}
@@ -104,11 +73,12 @@ if __name__ == "__main__":
     input_lang = input("Input language code (e.g. es, en, is) [default: en]: ").strip().lower() or "en"
 
     country_name = "Switzerland"
-    country_info = config["countries"][country_name]
+    country_info = data["countries"][country_name]
     iso = country_info["iso"]
     local_langs = [str(l).strip().lower() for l in country_info.get("lang", ["en"]) if str(l).strip()]
+    phone_prefix = str(country_info.get("prefix") or "").strip()
 
-    discard_terms, priority_terms = email_lists(local_langs=local_langs)
+    discard_terms, priority_terms = email_terms_translated(langs=local_langs)
     timings["resolve_country_and_email_terms"] = time.perf_counter() - t0
     print(f"Input lang: {input_lang} | Fixed country: {country_name} ({iso}) | Local langs: {local_langs}")
     print(f"Loaded {len(discard_terms)} discard terms and {len(priority_terms)} priority terms.")
@@ -170,8 +140,9 @@ if __name__ == "__main__":
         iso,
         relevant_keywords=user_keywords,
         irrelevant_keywords=negative_keywords,
-        need_socials=need_socials,
         local_langs=local_langs,
+        phone_prefix=phone_prefix,
+        max_workers=64
     )
     timings["scrape_and_merge"] = time.perf_counter() - t0
 
@@ -195,7 +166,7 @@ if __name__ == "__main__":
     )
 
     if export_chains:
-        save_chains_to_json(chains_payload, output_path=f"chains_{iso}.json")
+        save_chains_to_json(chains_payload, output_path=f"output/chains_{iso}.json")
 
     # 6. Filtrar vacíos y guardar en CSV (solo sitios únicos)
     empty_ans = input("Show results with empty selected columns? (y/n): ").strip().lower()
@@ -203,7 +174,7 @@ if __name__ == "__main__":
 
     t0 = time.perf_counter()
     exported_rows = filtering_output(unique_places, selected_columns, allow_empty=allow_empty)
-    save_to_csv(exported_rows, output_path=f"email_list_{iso}.csv")
+    save_to_csv(exported_rows, output_path=f"output/email_list_{iso}.csv")
     timings["save_csv"] = time.perf_counter() - t0
 
     # Conteo final

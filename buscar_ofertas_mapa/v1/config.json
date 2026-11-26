@@ -8,7 +8,7 @@
     "Monaco":  {"iso": "MC", "lang": ["fr", "it", "en"]},
     "Italy": {"iso": "IT", "lang": ["it", "de", "fr", "en"]},
     "San Marino": {"iso": "SM", "lang": ["it", "en"]},
-    "Switzerland": {"iso": "CH", "lang": ["it", "de", "fr", "en"]},
+    "Switzerland": {"iso": "CH", "lang": ["it", "de", "fr", "en"], "prefix": "+41"},
     "Austria": {"iso": "AT", "lang": ["de", "en"]},
     "Liechtenstein": {"iso": "LI", "lang": ["de", "en"]},
     "Germany": {"iso": "DE", "lang": ["de", "en"]},
@@ -23,8 +23,8 @@
     "Denmark": {"iso": "DK", "lang": ["da", "de", "en", "fo"]}
   },
 
-  "false_ends": [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".js", ".css", "wixpress.com", "sentry.io", "example.com", "@domain.com"],
-  "HEADERS": {
+  "false_ends": [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".js", ".css"],
+  "headers": {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   },
 
@@ -36,6 +36,15 @@
     "https://il.linkedin.com/company/wix-com", "http://www.facebook.com/sharer/", "https://www.facebook.com/Facebook",
     "https://www.facebook.com/p/", "http://www.facebook.com/wix", "https://www.facebook.com/pages/", "https://www.facebook.com/H",
     "https://www.facebook.com/sharer.php", "https://www.facebook.com/events/", "https://www.facebook.com/about/", "https://www.instagram.com/explore/",
-    "https://www.instagram.com/p/", "https://www.linkedin.com/company/h", ""
+    "https://www.instagram.com/p/", "https://www.linkedin.com/company/h", "http://www.facebook.com/pages/"
+    ],
+
+    "generic_email_domains": [
+    "gmail.com", "googlemail.com", "hotmail.com", "hotmail.es", "hotmail.fr",
+    "outlook.com", "outlook.es", "live.com", "msn.com", "yahoo.com", "yahoo.es",
+    "yahoo.fr", "yahoo.de", "icloud.com", "me.com", "aol.com", "proton.me",
+    "protonmail.com", "gmx.com", "gmx.de", "gmx.ch", "web.de", "bluewin.ch",
+    "sunrise.ch", "hispeed.ch", "orange.fr", "wanadoo.fr", "free.fr", "laposte.net",
+    "domain.com", "email.com", "wixpress.com", "sentry.io", "example.com"
     ]
-}
+  }
