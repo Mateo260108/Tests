@@ -1,5 +1,0 @@
-.env
-__pycache__/
-*.csv
-chains_*.json
-mailer.py
